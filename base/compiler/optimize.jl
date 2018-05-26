@@ -621,10 +621,11 @@ function type_annotate!(sv::InferenceState)
             end
             # This can create `Expr(:gotoifnot)` with dangling label, which we
             # will clean up by replacing them with the conditions later.
-            deleteat!(body, i)
-            deleteat!(states, i)
-            nexpr -= 1
-            continue
+            #deleteat!(body, i)
+            body[i] = nothing
+            #deleteat!(states, i)
+            #nexpr -= 1
+            #continue
         end
         i += 1
     end

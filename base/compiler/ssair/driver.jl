@@ -100,6 +100,7 @@ function just_construct_ssa(ci::CodeInfo, code::Vector{Any}, nargs::Int, linetab
     mod = linetable[1].mod
     # Go through and add an unreachable node after every
     # Union{} call. Then reindex labels.
+#=
     idx = 1
     while idx <= length(code)
         stmt = code[idx]
@@ -115,6 +116,7 @@ function just_construct_ssa(ci::CodeInfo, code::Vector{Any}, nargs::Int, linetab
         idx += 1
     end
     reindex_labels!(code) # update labels changed above
+=#
 
     inbounds_depth = 0 # Number of stacked inbounds
     meta = Any[]
@@ -158,11 +160,17 @@ function just_construct_ssa(ci::CodeInfo, code::Vector{Any}, nargs::Int, linetab
 end
 
 function run_passes(ci::CodeInfo, nargs::Int, linetable::Vector{LineInfoNode}, sv::OptimizationState)
-    ir = just_construct_ssa(ci, copy(ci.code), nargs, linetable)
+    ir = just_construct_ssa(ci, copy_exprargs(ci.code), nargs, linetable)
     #@Base.show ("after_construct", ir)
     # TODO: Domsorting can produce an updated domtree - no need to recompute here
     @timeit "compact 1" ir = compact!(ir)
-    #@timeit "verify 1" verify_ir(ir)
+    try
+        @timeit "verify 1" verify_ir(ir)
+    catch
+        Core.println(ci.code)
+        Core.println(ci.linetable)
+        error()
+    end
     @timeit "Inlining" ir = ssa_inlining_pass!(ir, linetable, sv)
     #@timeit "verify 2" verify_ir(ir)
     @timeit "domtree 2" domtree = construct_domtree(ir.cfg)
