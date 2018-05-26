@@ -371,7 +371,9 @@ function typeinf_work(frame::InferenceState)
                 else
                     t = abstract_eval(stmt, changes, frame)
                     t === Bottom && break
-                    changes = StateUpdate(SSAValue(pc), VarState(t, false), changes)
+                    if !isempty(frame.ssavalue_uses[pc])
+                        changes = StateUpdate(SSAValue(pc), VarState(t, false), changes)
+                    end
                 end
                 if frame.cur_hand !== () && isa(changes, StateUpdate)
                     # propagate new type info to exception handler
