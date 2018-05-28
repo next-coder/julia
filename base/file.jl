@@ -39,7 +39,7 @@ Get the current working directory.
 # Examples
 ```julia-repl
 julia> pwd()
-"/home/JuliaUser/.julia/v0.7"
+"/home/JuliaUser"
 
 julia> cd("/home/JuliaUser/Projects/julia")
 
@@ -106,15 +106,57 @@ end
 Temporarily changes the current working directory and applies function `f` before returning.
 
 # Examples
-```jldoctest
-julia> cd(readdir, joinpath(Sys.BINDIR, Base.DATAROOTDIR, "julia"))
-6-element Array{String,1}:
+```julia-repl
+julia> pwd()
+"/home/JuliaUser"
+
+julia> mkdir("testingdir")
+"testingdir"
+
+julia> cd("testingdir")
+
+julia> pwd()
+"/home/JuliaUser/testingdir"
+
+julia> cd()
+
+julia> pwd()
+"/home/JuliaUser"
+
+julia> cd(readdir, "/home/JuliaUser/Projects/julia")
+35-element Array{String,1}:
+ ".DS_Store"
+ ".circleci"
+ ".freebsdci.sh"
+ ".git"
+ ".gitattributes"
+ ".github"
+ ".gitignore"
+ ".mailmap"
+ ".travis.yml"
+ "CONTRIBUTING.md"
+ "DISTRIBUTING.md"
+ "HISTORY.md"
+ "LICENSE.md"
+ "Make.inc"
+ ⋮
+ "Windows.inc"
+ "appveyor.yml"
  "base"
- "base.cache"
- "cert.pem"
- "julia-config.jl"
+ "contrib"
+ "deps"
+ "doc"
+ "etc"
+ "julia"
+ "src"
  "stdlib"
  "test"
+ "ui"
+ "usr"
+ "usr-staging"
+
+julia> pwd()
+"/home/JuliaUser"
 ```
 """
 cd(f::Function) = cd(f, homedir())
@@ -138,13 +180,13 @@ Return `path`.
 
 # Examples
 ```julia-repl
-julia> mkdir("faketestingdir")
-"faketestingdir"
+julia> mkdir("testingdir")
+"testingdir"
 
-julia> cd("faketestingdir")
+julia> cd("testingdir")
 
 julia> pwd()
-"/home/JuliaUser/faketestingdir"
+"/home/JuliaUser/testingdir"
 ```
 """
 function mkdir(path::AbstractString; mode::Integer = 0o777)
@@ -166,16 +208,16 @@ Return `path`.
 
 # Examples
 ```julia-repl
-julia> mkdir("faketestingdir")
-"faketestingdir"
+julia> mkdir("testingdir")
+"testingdir"
 
-julia> cd("faketestingdir")
+julia> cd("testingdir")
 
 julia> pwd()
-"/home/JuliaUser/faketestingdir"
+"/home/JuliaUser/testingdir"
 
-julia> mkpath("my/fake/dir")
-"my/fake/dir"
+julia> mkpath("my/test/dir")
+"my/test/dir"
 
 julia> readdir()
 1-element Array{String,1}:
@@ -185,9 +227,9 @@ julia> cd("my")
 
 julia> readdir()
 1-element Array{String,1}:
- "fake"
+ "test"
 
-julia> readdir("fake")
+julia> readdir("test")
 1-element Array{String,1}:
  "dir"
 ```
@@ -377,8 +419,7 @@ julia> write("my_little_file", 2);
 julia> mtime("my_little_file")
 1.5273815391135583e9
 
-julia> touch("my_little_file")
-"my_little_file"
+julia> touch("my_little_file");
 
 julia> mtime("my_little_file")
 1.527381559163435e9
@@ -571,26 +612,38 @@ end
 Return the files and directories in the directory `dir` (or the current working directory if not given).
 
 # Examples
-```jldoctest
-julia> readdir(joinpath(Sys.BINDIR, Base.DATAROOTDIR))
-6-element Array{String,1}:
- "aclocal"
+```julia-repl
+julia> readdir("/home/JuliaUser/Projects/julia")
+35-element Array{String,1}:
+ ".DS_Store"
+ ".circleci"
+ ".freebsdci.sh"
+ ".git"
+ ".gitattributes"
+ ".github"
+ ".gitignore"
+ ".mailmap"
+ ".travis.yml"
+ "CONTRIBUTING.md"
+ "DISTRIBUTING.md"
+ "HISTORY.md"
+ "LICENSE.md"
+ "Make.inc"
+ ⋮
+ "Windows.inc"
+ "appveyor.yml"
+ "base"
+ "contrib"
+ "deps"
  "doc"
- "info"
+ "etc"
  "julia"
- "man"
- "opt-viewer"
-
-julia> cd(joinpath(Sys.BINDIR, Base.DATAROOTDIR))
-
-julia> readdir()
-6-element Array{String,1}:
- "aclocal"
- "doc"
- "info"
- "julia"
- "man"
- "opt-viewer"
+ "src"
+ "stdlib"
+ "test"
+ "ui"
+ "usr"
+ "usr-staging"
 ```
 """
 function readdir(path::AbstractString)
@@ -640,6 +693,20 @@ A custom error handling function can be provided through `onerror` keyword argum
         end
     end
 
+# Examples
+```julia-repl
+julia> mkpath("my/test/dir")
+"my/test/dir"
+
+julia> (root, dirs, files) = first(itr)
+("my", ["test"], String[])
+
+julia> (root, dirs, files) = first(itr)
+("my/test", ["dir"], String[])
+
+julia> (root, dirs, files) = first(itr)
+("my/test/dir", String[], String[])
+```
 """
 function walkdir(root; topdown=true, follow_symlinks=false, onerror=throw)
     content = nothing
