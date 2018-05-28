@@ -882,11 +882,20 @@
        ,@(if (and (null? defs)
                   (not (null? params))
                   ;; don't generate an outer constructor if the type has
-                  ;; parameters not mentioned in the field types. such a
-                  ;; constructor would not be callable anyway.
-                  (every (lambda (sp)
-                           (expr-contains-eq sp (cons 'list field-types)))
-                         params))
+                  ;; parameters not reachable from the field types, via bounds.
+                  ;; such a constructor could not work, since the parameter
+                  ;; values would never be specified.
+                  (let loop ((root-types   (cons 'list field-types))
+                             (remaining-sp bounds))
+                    (receive
+                     (new-reachable other-sp)
+                     (separate (lambda (b)
+                                 (expr-contains-eq (car b) root-types))
+                               remaining-sp)
+                     (if (null? new-reachable)
+                         (null? remaining-sp) ;; return true if all sp have been marked as reachable
+                         (loop (cons 'list (apply append (map cdr new-reachable)))
+                               other-sp)))))
              `((scope-block
                 (block
                  (global ,name)
