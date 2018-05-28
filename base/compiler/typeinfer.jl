@@ -373,6 +373,7 @@ function typeinf_work(frame::InferenceState)
                     t === Bottom && break
                     if !isempty(frame.ssavalue_uses[pc])
                         changes = StateUpdate(SSAValue(pc), VarState(t, false), changes)
+                        record_ssa_assign(pc, t, frame)
                     end
                 end
                 if frame.cur_hand !== () && isa(changes, StateUpdate)
@@ -387,13 +388,13 @@ function typeinf_work(frame::InferenceState)
                         push!(W, l)
                     end
                 end
-                if isa(changes, StateUpdate)
-                    changes_var = changes.var
-                    if isa(changes_var, SSAValue)
-                        # directly forward changes to an SSAValue to the applicable line
-                        record_ssa_assign(changes_var.id, changes.vtype.typ, frame)
-                    end
-                end
+                #if isa(changes, StateUpdate)
+                #    changes_var = changes.var
+                #    if isa(changes_var, SSAValue)
+                #        # directly forward changes to an SSAValue to the applicable line
+                #        record_ssa_assign(changes_var.id, changes.vtype.typ, frame)
+                #    end
+                #end
             end
             pc´ > n && break # can't proceed with the fast-path fall-through
             frame.handler_at[pc´] = frame.cur_hand

@@ -100,8 +100,9 @@ function just_construct_ssa(ci::CodeInfo, code::Vector{Any}, nargs::Int, linetab
     mod = linetable[1].mod
     # Go through and add an unreachable node after every
     # Union{} call. Then reindex labels.
-#=
     idx = 1
+    oldidx = 1
+    locs = Int[]
     while idx <= length(code)
         stmt = code[idx]
         if isexpr(stmt, :(=))
@@ -110,13 +111,28 @@ function just_construct_ssa(ci::CodeInfo, code::Vector{Any}, nargs::Int, linetab
         if isa(stmt, Expr) && stmt.typ === Union{}
             if !(idx < length(code) && isexpr(code[idx+1], :unreachable))
                 insert!(code, idx + 1, ReturnNode())
+                insert!(ci.codelocs, idx + 1, ci.codelocs[idx])
+                insert!(ci.ssavaluetypes, idx + 1, Union{})
+                push!(locs, oldidx + 1)
                 idx += 1
             end
         end
         idx += 1
+        oldidx += 1
     end
-    reindex_labels!(code) # update labels changed above
-=#
+    if !isempty(locs)
+        reindex_labels!(code) # update labels changed above
+        function incr(id)
+            j = searchsortedfirst(locs, id)
+            if j > length(locs) || locs[j] != id
+                j -= 1
+            end
+            return id + j
+        end
+        for i = 1:length(code)
+            code[i] = ssavalue_increment(code[i], incr)
+        end
+    end
 
     inbounds_depth = 0 # Number of stacked inbounds
     meta = Any[]

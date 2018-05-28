@@ -1467,7 +1467,7 @@ function inlineable(@nospecialize(f), @nospecialize(ft), e::Expr, atypes::Vector
     if !isempty(ssavalue_types)
         incr = length(sv.src.ssavaluetypes)
         if incr != 0
-            body = ssavalue_increment(body, incr)
+            body = ssavalue_increment(body, id->id+incr)
         end
         append!(sv.src.ssavaluetypes, ssavalue_types)
     end
@@ -1770,7 +1770,7 @@ function inline_worthy(@nospecialize(body), src::CodeInfo, mod::Module, params::
 end
 
 ssavalue_increment(@nospecialize(body), incr) = body
-ssavalue_increment(body::SSAValue, incr) = SSAValue(body.id + incr)
+ssavalue_increment(body::SSAValue, incr) = SSAValue(incr(body.id))
 function ssavalue_increment(body::Expr, incr)
     if is_meta_expr(body)
         return body
